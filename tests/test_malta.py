@@ -1,0 +1,1 @@
+from malta import malta
