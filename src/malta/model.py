@@ -14,9 +14,9 @@ def run_model(years_in, dt, emissions, sink, ics=None, trans_dir=None):
     Args:
         years_in (array/list): Whole years for which to run model.
         dt (float): Time step in seconds (recommended 8 hrs or less)
-        ics (array): Initial conditions of model.
         emissions (class): Class containing emissions.
         sink (sink): Class containing sinks.
+        ics (array, optional): Initial conditions of model. Defaults to None (zero initial conditions).
         trans_dir (str, optional): Path to directory containing transport files. Defaults to None.
 
     Returns:
