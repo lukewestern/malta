@@ -31,7 +31,7 @@ ds_out = model.run_model(years, dt, emissions, sink)
 ```
 The returned ds_out is an xarray dataset containing monthly mean output variables from 
 the 2D model run.
-See docs/examples.ipynb for more information on running the model.
+See docs/example.ipynb for more information on running the model.
 
 ## Contributing
 
