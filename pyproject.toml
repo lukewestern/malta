@@ -7,13 +7,18 @@ license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.9"
-numpy = "1.24.0"
+python = "^3.9, <3.11"
+numpy = "~1.21"
 xarray = "^2023.5.0"
 pandas = "^2.0.2"
-numba = "^0.57.1"
+numba = "0.55"
+scipy = "^1.10.1"
+matplotlib = "^3.7.1"
 
 [tool.poetry.dev-dependencies]
+
+[tool.poetry.group.dev.dependencies]
+pytest-cov = "^4.1.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
