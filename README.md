@@ -10,7 +10,27 @@ $ pip install malta
 
 ## Usage
 
-- TODO
+`malta` is a two-dimensional (longitudinally-averaged) model of atmospheric transport.
+A simple run of constant emissons of 10 Gg of CFC-11 with zero initial conditions
+from 2010-2020 inclusive could be:
+```python
+import numpy as np
+from malta import model
+
+start_year = 2010
+end_year = 2021
+dt = 8*3600
+species = "CFC-11"
+
+# Set up and run model
+years = np.array([str(yr) for yr in range(start_year,end_year)])
+emistot = np.repeat(10, len(years))
+emissions = model.create_emissions(species, emistot, dt)
+sink = model.create_sink(species, dt)
+ds_out = model.run_model(years, dt, emissions, sink) 
+```
+The returned ds_out is an xarray dataset containing monthly mean output variables from 
+the 2D model run.
 
 ## Contributing
 
