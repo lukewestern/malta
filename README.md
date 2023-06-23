@@ -1,6 +1,6 @@
 # malta
 
-A 2D model of atmospheric transport
+MALTA: Model of Averaged in Longitude Transport in the Atmosphere.
 
 ## Installation
 
