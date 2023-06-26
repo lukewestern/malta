@@ -1,6 +1,6 @@
 # malta
 
-A 2D model of atmospheric transport
+MALTA: Model of Averaged in Longitude Transport in the Atmosphere.
 
 ## Installation
 
@@ -31,6 +31,7 @@ ds_out = model.run_model(years, dt, emissions, sink)
 ```
 The returned ds_out is an xarray dataset containing monthly mean output variables from 
 the 2D model run.
+See docs/example.ipynb for more information on running the model.
 
 ## Contributing
 
