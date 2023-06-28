@@ -362,7 +362,7 @@ def calc_flux(Qg, Qmono, Cz, dtdx, cosc, cose, mvae, mva, dz=np.array([0, 0]), u
     ny = Qg.shape[1]
     Qg = np.vstack((Qg, np.zeros_like(Qg[-1:, :])))
     AR, AL, A6 = calc_As(Qg, Qmono)
-    # Calculate fluxes using 1.12 of Coella & Woodward 1983
+    # Calculate fluxes using 1.13 of Coella & Woodward 1983
     flux = np.zeros_like(Qg)
     for i in range(nx):
         for j in range(ny):
@@ -373,7 +373,7 @@ def calc_flux(Qg, Qmono, Cz, dtdx, cosc, cose, mvae, mva, dz=np.array([0, 0]), u
             else:
                 flux[i, j] = AL[i, j] - 0.5 * Cz[i, j] * \
                     (AR[i, j] - AL[i, j] + (1 + (2./3.)*Cz[i, j]) * A6[i, j])
-    # Follow Coella & Woodward 1983 to calculate fluxes
+    # Follow eq 1.14 Coella & Woodward 1983 to calculate fluxes
     ffy = np.zeros_like(Qg)
     dqv = np.zeros_like(Qg)
     if horizontal == True:
