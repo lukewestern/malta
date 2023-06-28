@@ -62,8 +62,7 @@ def run_model(years_in, dt, emissions, sink, ics=None, trans_dir=None):
             z=(["z"], ds_t.zm.values),
             lat=(["lat"], ds_t.latm.values),
 
-        ),
-        attrs=dict(description="2D model output."),
+        )
     )
 
     c_arr_mm = np.zeros((12*nyears, nzm, nym))
