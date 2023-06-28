@@ -20,7 +20,7 @@ from malta import model
 start_year = 2010
 end_year = 2021
 dt = 8*3600
-species = "CFC-11"
+species = "CFC11"
 
 # Set up and run model
 years = np.array([str(yr) for yr in range(start_year,end_year)])
