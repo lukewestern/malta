@@ -343,7 +343,7 @@ def create_emissions(species, emis, dt, distribute="uniform", weights=None, R=63
         species (str): Species to emit.
         emis (array): Array of total global emissions for each year of run.
         dt (float): Time step in seconds.
-        distribute (str, optional): How to distribute global total emissions. Options are: "uniform", "land", "ocean", "population" and "gpb. Defaults to "uniform".
+        distribute (str, optional): How to distribute global total emissions. Options are: "uniform", "land", "ocean", "population" and "gdp". Defaults to "uniform".
         weights (array, optional): Option to provide custom weights to distribute emissions in each latitude box. Can either be of length of latitudes or different weights for each year. Defaults to None.
         R (float, optional): Radius of Earth. Defaults to 6378.1e3.
         emis_units (str, optional): Units of emissions (g, kg, Mg, Gg, Tg). Defaults to "Gg".
