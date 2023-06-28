@@ -149,29 +149,33 @@ def run_model(years_in, dt, emissions, sink, ics=None, trans_dir=None):
         lifetime_trop = B/L_trop/(3600*24*365)
         lifetime_strat = B/L_strat/(3600*24*365)
 
-    return create_output(ds_out, c_arr_mm, cend, loss_mm, lifetime, lifetime_trop, lifetime_strat, B, B_trop, emissions)
+    return create_output(ds_out, c_arr_mm, cend, loss_mm, lifetime, lifetime_trop, lifetime_strat, B, B_trop, emissions, L, L_trop)
 
 
-def create_output(ds_out, c_arr_mm, cend, loss_mm, lifetime, lifetime_trop, lifetime_strat, B, B_trop, emissions):
+def create_output(ds_out, c_arr_mm, cend, loss_mm, lifetime, lifetime_trop, lifetime_strat, B, B_trop, emissions, L, L_trop):
     """Put variables into xarray dataset"""
+    import malta
+    import getpass
 
     ds_out[emissions.species] = (('time', 'z', "lat"), c_arr_mm)
     ds_out[f"{emissions.species}_end"] = (('time', 'z', "lat"), cend)
-    ds_out['loss'] = (('time', 'z', "lat"), loss_mm)
+    ds_out['loss_frequency'] = (('time', 'z', "lat"), loss_mm)
     ds_out['lifetime'] = (('time'), lifetime)
     ds_out['lifetime_trop'] = (('time'), lifetime_trop)
     ds_out['lifetime_strat'] = (('time'), lifetime_strat)
     ds_out['burden'] = (('time'), B)
     ds_out['burden_trop'] = (('time'), B_trop)
+    ds_out['loss'] = (('time'), L)
+    ds_out['loss_trop'] = (('time'), L_trop)
     ds_out[emissions.species].attrs = {"standard_name": f"{emissions.species}_mole_fraction_in_air",
                                        "long_name": f"Mean {emissions.species} for each month",
-                                       "units": f"{1/emissions.unit_scale} mol mol-1"}
+                                       "units": f"{1/emissions.unit_scale}"}
     ds_out[f"{emissions.species}_end"].attrs = {"standard_name": f"{emissions.species}_mole_fraction_in_air_end",
-                                                "units": f"{1/emissions.unit_scale} mol mol-1",
+                                                "units": f"{1/emissions.unit_scale}",
                                                 "long_name": "Mole fraction at end time of month"}
-    ds_out['loss'].attrs = {"standard_name": f"{emissions.species}_loss",
+    ds_out['loss_frequency'].attrs = {"standard_name": f"{emissions.species}_loss_frequency",
                             "units": f"{1/emissions.unit_scale} mol mol-1 s-1",
-                            "long_name": f"Loss of {emissions.species}"}
+                            "long_name": f"Loss frequency of {emissions.species}"}
     ds_out['lifetime'].attrs = {"standard_name": f"{emissions.species}_lifetime",
                                 "units": f"years",
                                 "long_name": "Total atmospheric lifetime"}
@@ -187,7 +191,23 @@ def create_output(ds_out, c_arr_mm, cend, loss_mm, lifetime, lifetime_trop, life
     ds_out['burden_trop'].attrs = {"standard_name": f"{emissions.species}_tropospheric_burden",
                                    "units": f"{emissions.emis_scale} kg",
                                    "long_name": "Tropospheric atmospheric burden"}
-    
+    ds_out['loss'].attrs = {"standard_name": f"{emissions.species}_loss",
+                              "units": f"{emissions.emis_scale} kg",
+                              "long_name": "Total atmospheric loss"}
+    ds_out['loss_trop'].attrs = {"standard_name": f"{emissions.species}_tropospheric_loss",
+                                   "units": f"{emissions.emis_scale} kg",
+                                   "long_name": "Tropospheric atmospheric loss"}
+    ds_out['lat'].attrs = {"standard_name": f"latitude",
+                                   "units": "degree_north",
+                                   "long_name": "latitude"}
+    ds_out['z'].attrs = {"standard_name": f"altitude",
+                                "units": "m",
+                                "long_name": "altitude"}
+    ds_out.attrs["source"] = f"malta {malta.__version__}"
+    ds_out.attrs["creation_date"] = f"{pd.to_datetime('today')}"
+    ds_out.attrs["title"] = f"output for {emissions.species} from the malta 2D model."
+    ds_out.attrs["created_by"] = f"{getpass.getuser()}"
+
     return ds_out
 
 class sink:
