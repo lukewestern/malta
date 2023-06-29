@@ -1,6 +1,8 @@
 # malta
 
-MALTA: Model of Averaged in Longitude Transport in the Atmosphere.
+MALTA: Model of Averaged in Longitude Transport in the Atmosphere.\
+Latest release [![DOI](https://zenodo.org/badge/656881397.svg)](https://zenodo.org/badge/latestdoi/656881397)
+
 
 ## Installation
 
