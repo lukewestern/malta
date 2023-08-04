@@ -1,11 +1,11 @@
 # malta
 
 MALTA: Model of Averaged in Longitude Transport in the Atmosphere.\
-Latest release [![DOI](https://zenodo.org/badge/656881397.svg)](https://zenodo.org/badge/latestdoi/656881397)
-
+Latest release [![DOI](https://zenodo.org/badge/656881397.svg)](https://zenodo.org/badge/latestdoi/656881397)\
+A description of the model is available here: https://doi.org/10.22541/essoar.168890012.27918585/v1
 
 ## Installation
-
+To install the latest release:
 ```bash
 $ pip install malta
 ```
