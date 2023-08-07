@@ -51,7 +51,7 @@ def interpolate_T(ds_met, var, zb3D, lon, zx2D, latx2D):
             "lon": (["lon"], lon),
             "z":  (["z"], zx2D),})
     regridder = xe.Regridder(dsT, ds_out, "bilinear", filename=f"{weight_folder}/bilinear_{str(int(np.random.random()*100))}_{month}.nc") 
-    dsT_out = regridder(dsT).to_dataset().drop('lev')
+    dsT_out = regridder(dsT).to_dataset(name="Met_T").drop('lev')
     grid = Grid(dsT_out, coords={'z': {'center':'z'}}, periodic=False)
     dsTt = grid.transform(dsT_out[var], 'z', zx2D, target_data=dsT_out.z)
 
@@ -372,7 +372,7 @@ def make_nondivergent(w_in, v_in, cosc, cose, H, z, zm, y, dz, dy):
     return w, v
 
 
-def make_2D_yearly_files():
+def make_2D_yearly_files(start_year, end_year = None):
     """Take monthly 2D transport and make CF compliant 3D netcdf files"""
     coord_dict = {
     "y" : {"long_name":"distance from equator at cell boundary","units":"m", "standard_name":"none" },
@@ -407,11 +407,17 @@ def make_2D_yearly_files():
 
     static_vars = ['press', 'cose', 'cosc', 'latm', 'lat', 'dy', 'dz', 'mva', 'mvae']
 
-    for year in range(1980, 2021):
+    start_year = int(start_year)
+    if end_year is None:
+        end_year = start_year+1
+    else:
+        end_year = int(end_year)
+
+    for year in range(start_year, end_year):
         yrfns = sorted(glob.glob(f"{monthly_transport}/transport2D_{year}*"))
         if not len(yrfns):
             continue
-        yrds = xr.open_mfdataset(yrfns, concat_dim="time")
+        yrds = xr.open_mfdataset(yrfns, combine='nested', concat_dim="time")
 
         for st_var in static_vars:
             yrds[st_var] = yrds[st_var].mean("time")
@@ -428,23 +434,23 @@ def make_2D_yearly_files():
         yrds.attrs["History"] = f"File created on {pd.to_datetime('today')}"
         yrds.to_netcdf(f"{model_trans_dir}/transport2D_{year}.nc")    
 
-    yrfns = sorted(glob.glob(f"{monthly_transport}/transport2D_{1900}*"))
-    yrds = xr.open_mfdataset(yrfns, concat_dim="time")
+    # yrfns = sorted(glob.glob(f"{monthly_transport}/transport2D_{1900}*"))
+    # yrds = xr.open_mfdataset(yrfns, combine='nested', concat_dim="time")
 
-    for st_var in static_vars:
-        yrds[st_var] = yrds[st_var].mean("time")
+    # for st_var in static_vars:
+    #     yrds[st_var] = yrds[st_var].mean("time")
 
-    var_list = list(yrds.keys())
-    coord_list = list(yrds.coords)
+    # var_list = list(yrds.keys())
+    # coord_list = list(yrds.coords)
 
-    for var in var_list:
-        yrds[var].attrs = vars_dict[var]
-    for coord in coord_list:
-        yrds[coord].attrs = coord_dict[coord]
-    yrds.attrs = file_attrs
-    yrds.attrs["Filename"] = f"transport2D_{year}.nc"
-    yrds.attrs["History"] = f"File created on {pd.to_datetime('today')}"
-    yrds.to_netcdf(f"{model_trans_dir}/transport2D_{1900}.nc")
+    # for var in var_list:
+    #     yrds[var].attrs = vars_dict[var]
+    # for coord in coord_list:
+    #     yrds[coord].attrs = coord_dict[coord]
+    # yrds.attrs = file_attrs
+    # yrds.attrs["Filename"] = f"transport2D_{year}.nc"
+    # yrds.attrs["History"] = f"File created on {pd.to_datetime('today')}"
+    # yrds.to_netcdf(f"{model_trans_dir}/transport2D_{1900}.nc")
 
 if __name__ == "__main__":
 
@@ -494,7 +500,7 @@ if __name__ == "__main__":
             "lon": (["lon"], ds_met.lon.values),
             "z":  (["z"], zm2D),})
     regridder = xe.Regridder(dsv, ds_out, "bilinear", filename=f"{weight_folder}/bilinear_{str(int(np.random.random()*100))}_{month}.nc") 
-    dsv_out = regridder(dsv).to_dataset().drop('lev')
+    dsv_out = regridder(dsv).to_dataset(name="Met_V").drop('lev')
     grid = Grid(dsv_out, coords={'z': {'center':'z'}}, periodic=False)
     dsvt = grid.transform(dsv_out.Met_V, 'z', zm2D, target_data=dsv_out.z)
     dsvt[:,-1,:,:] = 0
@@ -561,16 +567,16 @@ if __name__ == "__main__":
     # Infer eddy transport
     K, F, D = infer_eddy_agrid(dsvqt, dsvt,dswqt, dswt, y2D, ym2D)
     # vF, vD = validation_tracer_agrid(dsvqt, dsvt,dswqt, dswt,7, y2D, ym2D) # Can be used to validate
-    K, Kyz_zgrid, Kzy_ygrid, Dzy, Dyz = correct_eddy(K, zm2D, z2D, ym2D, y2D, z_trop_mask)
-    K, Kyz_zgrid, Kzy_ygrid, Dzy, Dyz = correct_eddy(K, zm2D, z2D, ym2D, y2D, z_trop_mask)
+    K, Kyz_zgrid, Kzy_ygrid, Dzy, Dyz = correct_eddy(K, zm2D, z2D, ym2D, y2D)
+    K, Kyz_zgrid, Kzy_ygrid, Dzy, Dyz = correct_eddy(K, zm2D, z2D, ym2D, y2D)
 
     # Advection terms made non-divergent
     # First, derive residual transport (eddy component)
-    dsTwt = interpolate_T(ds_met, "Met_T", zb3D, ds_met.lon.values, z2D, latm2D)
-    dsTwt[:,:,:,0] = 0
-    dsvwt = interpolate_T(ds_met, "Met_V", zb3D, ds_met.lon.values, z2D, latm2D)
-    dsvwt[:,:,:,0] = 0
-    dsvwt[:,:,:,-1] = 0
+    # dsTwt = interpolate_T(ds_met, "Met_T", zb3D, ds_met.lon.values, z2D, latm2D)
+    # dsTwt[:,:,:,0] = 0
+    # dsvwt = interpolate_T(ds_met, "Met_V", zb3D, ds_met.lon.values, z2D, latm2D)
+    # dsvwt[:,:,:,0] = 0
+    # dsvwt[:,:,:,-1] = 0
     # Derive w_star only as v is derived from w forcing non-divergence  
     # w_star = wstar_potentialtemp(dsTwt,dsvwt, H)
     v_star, w_star = derive_ustar(K, Kzy_ygrid, Kyz_zgrid, zm2D, ym2D) 
@@ -607,7 +613,7 @@ if __name__ == "__main__":
             dz=(["zm"], dz2D),
             mva=(["zm"], np.squeeze(mva)),
             mvae=(["z"], np.squeeze(mvae)),
-            z_trop=(["ym"], z_trop),
+            z_trop=(["ym"], z_trop.values),
         ),
         coords=dict(
             y=(["y"], y2D),
