@@ -7,7 +7,7 @@ import xarray as xr
 import pandas as pd
 
 
-def run_model(years_in, dt, emissions, sink, ics=None, trans_dir=None):
+def run_model(years_in, dt, emissions, sink, ics=None, trans_dir=None, convection=True):
     """
     Runs 2D model for time period specified. 
 
@@ -18,6 +18,7 @@ def run_model(years_in, dt, emissions, sink, ics=None, trans_dir=None):
         sink (sink): Class containing sinks.
         ics (array, optional): Initial conditions of model. Defaults to None (zero initial conditions).
         trans_dir (str, optional): Path to directory containing transport files. Defaults to None.
+        convecton (bool, optional): Whether to use the convective scheme (much slower). Defaults to True.
 
     Returns:
         dataset: xarray dataset containing outputs from model.
@@ -77,11 +78,14 @@ def run_model(years_in, dt, emissions, sink, ics=None, trans_dir=None):
         mt = 0
         ds_t = utils.opends(trans_dir + f"transport2D_{str(year)}.nc")
         Dyy = ds_t.Dyy.values[:, :, :-1]
-        Dzz = ds_t.Dzz.values[:, :-1, :]
-        Dyz = ds_t.Dzy.values
+        Dzz = ds_t.Dzz.values[:, :-1, :] 
+        Dzz[:,:2,:] = Dzz[:,:2,:]
+        Dyz = ds_t.Dzy.values 
+        Dyz[:,:2,:] = Dyz[:,:2,:] 
         w = ds_t.w.values
         v = ds_t.v.values
         temp = ds_t.temp.values
+        conv_flux = ds_t.cflux.values
 
         for mnth in dom:
             t = 0
@@ -92,7 +96,7 @@ def run_model(years_in, dt, emissions, sink, ics=None, trans_dir=None):
             c_arr[-1, :, :] = ics
             for _ in range(mnth):
                 for __ in range(dtpd):
-                    c_arr[t, :, :] = c_arr[t-1, :, :] + emissions.emit(yr)
+                    c_arr[t, :, :] = c_arr[t-1, :, :] + emissions.emit(dt, yr)
                     c_arr[t, :, :] = transport.linrood_advection(
                         c_arr[t, :, :], v[mt, :, :], w[mt, :, :], dy, dz, dt, mva, mvae, cosc, cose)
                     c_arr[t, :, :] = transport.rk4(c_arr[t, :, :], mva,  A, dt)
@@ -100,8 +104,12 @@ def run_model(years_in, dt, emissions, sink, ics=None, trans_dir=None):
                         c_arr[t, :, :], Dyz[mt, :, :], zm, ym, z, y, dz, dy)
                     c_arr[t, :, :] = transport.linrood_advection(
                         c_arr[t, :, :], vdiff, wdiff, dy, dz, dt, mva, mvae, cosc, cose)
+                    if convection:
+                        c_arr[t, :, :] = transport.convection(
+                            c_arr[t, :, :], conv_flux[mt,:,:], dz, dt, np.squeeze(mva))
                     c_arr[t, :, :], loss_arr[t, :, :] = sink.losses(
-                        c_arr[t, :, :], mt, temp[mt, :, :])
+                        c_arr[t, :, :], dt, mt, temp[mt, :, :])
+
                     t += 1
 
             ics = c_arr[-1, :, :]
@@ -215,7 +223,6 @@ class sink:
     into model or having to load them during run time.
 
     Args:
-        dt (float): Time step in seconds.
         strat_loss (array, optional): Stratospheric loss rate in each grid cell. Defaults to None.
         OH_field (array, optional): OH loss rate in each grid cell. Defaults to None.
         A_OH (float, optional): Arrhenius A constant for OH. Defaults to None.
@@ -225,7 +232,7 @@ class sink:
         ER_Cl (float, optional): Arrhenius E/R constant for Cl. Defaults to None.
     """
 
-    def __init__(self, dt, strat_loss=None,
+    def __init__(self, strat_loss=None,
                  OH_field=None, A_OH=None, ER_OH=None,
                  Cl_field=None, A_Cl=None, ER_Cl=None):
 
@@ -236,37 +243,36 @@ class sink:
         self.ER_OH = ER_OH
         self.A_Cl = A_Cl
         self.ER_Cl = ER_Cl
-        self.dt = dt
 
-    def losses(self, cin, month, Temp=None):
+    def losses(self, cin, dt, month, Temp=None):
         """Computes losses in mole fraction field"""
         loss_out = np.zeros_like(cin)
         if self.strat_loss is not None:
             cin, strat_loss = self.first_order_loss(
-                cin, self.strat_loss[month, :, :])
+                cin, dt, self.strat_loss[month, :, :])
             loss_out += strat_loss
         if self.OH_field is not None:
             cin, OH_loss = self.arrhenius_loss(
-                cin, self.A_OH, self.ER_OH, self.OH_field[month, :, :], Temp)
+                cin, dt, self.A_OH, self.ER_OH, self.OH_field[month, :, :], Temp)
             loss_out += OH_loss
         if self.Cl_field is not None:
             cin, Cl_loss = self.arrhenius_loss(
-                cin, self.A_Cl, self.ER_Cl, self.Cl_field, Temp)
+                cin, dt, self.A_Cl, self.ER_Cl, self.Cl_field, Temp)
             loss_out += Cl_loss
         return cin, loss_out
 
-    def first_order_loss(self, c_in, sink):
+    def first_order_loss(self, c_in, dt, sink):
         """Compute first order loss in mol/mol/s"""
-        c_out = c_in * np.exp(-self.dt*sink)
-        return c_out, (c_in - c_out)/self.dt
+        c_out = c_in * np.exp(-dt*sink)
+        return c_out, (c_in - c_out)/dt
 
-    def arrhenius_loss(self, c_in, A, ER, field, Temp):
+    def arrhenius_loss(self, c_in, dt, A, ER, field, Temp):
         """Compute loss using arrhenius rate constant"""
         c_loss = self.arrhenius_rate_constant(
-            A, ER, Temp) * field * self.dt * c_in
+            A, ER, Temp) * field * dt * c_in
         if (c_loss > c_in).any():
             c_loss[c_loss > c_in] = c_in[c_loss > c_in] - 1e-16
-        return c_in - c_loss,  c_loss/self.dt
+        return c_in - c_loss,  c_loss/dt
 
     def arrhenius_rate_constant(self, A, ER, Temp):
         """Compute arrhenius rate constant"""
@@ -279,7 +285,6 @@ class emissions:
 
     Args:
         emis (array): Emissions for each year for each latitude.
-        dt (float): Time step in seconds.
         species (string): Species to emit.
         lat (array): Latitude at grid cell edges.
         mva (array): Molar density of air (mol/m3) for each vertical layer. 
@@ -289,12 +294,11 @@ class emissions:
         mf_units (str, optional): Units of mole fractions (ppq, ppt, ppb, ppm). Defaults to "ppt".
     """
 
-    def __init__(self, emis, dt, species, lat, mva, dz, R=6378.1e3, emis_units="Gg", mf_units="ppt"):
+    def __init__(self, emis, species, lat, mva, dz, R=6378.1e3, emis_units="Gg", mf_units="ppt"):
 
         if emis.shape[1] != (len(lat)-1):
             print("Warning: shape of emissions array do not match latitude boxes")
 
-        self.dt = dt
         self.species = species
         self.molmass = utils.get_molmass(species)
         mfunit_dict = {"ppq": 1e15, "ppt": 1e12, "ppb": 1e9, "ppm": 1e6}
@@ -307,15 +311,15 @@ class emissions:
         self.nz = len(dz)
         self.emis = emis
 
-    def emit(self, year):
+    def emit(self, dt, year):
         """Function to emit emissions"""
         mol_emitted = np.zeros((self.nz, self.ny))
-        g_emitted = self.emis[year, :]*self.emis_scale*self.dt / (3600*24*365)
+        g_emitted = self.emis[year, :]*self.emis_scale*dt / (3600*24*365)
         mol_emitted[0, :] = g_emitted/self.molmass/self.mol_air_bx[0, :]
         return mol_emitted*self.unit_scale
 
 
-def create_sink(species, dt):
+def create_sink(species):
     """Function to create sink class from species"""
     species_info = utils.get_speciesinfo(species)
     if "A_OH" in species_info.keys() and "ER_OH" in species_info.keys():
@@ -327,10 +331,10 @@ def create_sink(species, dt):
         ER_OH = None
         OH_field = None
     strat_loss = utils.get_stratfield(species)
-    return sink(dt, strat_loss, OH_field, A_OH, ER_OH)
+    return sink(strat_loss, OH_field, A_OH, ER_OH)
 
 
-def create_emissions(species, emis, dt, distribute="uniform", weights=None, R=6378.1e3, emis_units="Gg", mf_units="ppt", trans_dir=None):
+def create_emissions(species, emis, distribute="uniform", weights=None, R=6378.1e3, emis_units="Gg", mf_units="ppt", trans_dir=None):
     """
     Wrapper to create emissions class. Provides a convenient way to distribute the global total of emissions. Emissions distributions have been interpolated
     from multiple data sources: 
@@ -341,7 +345,6 @@ def create_emissions(species, emis, dt, distribute="uniform", weights=None, R=63
     Args:
         species (str): Species to emit.
         emis (array): Array of total global emissions for each year of run.
-        dt (float): Time step in seconds.
         distribute (str, optional): How to distribute global total emissions. Options are: "uniform", "land", "ocean", "population" and "gdp". Defaults to "uniform".
         weights (array, optional): Option to provide custom weights to distribute emissions in each latitude box. Can either be of length of latitudes or different weights for each year. Defaults to None.
         R (float, optional): Radius of Earth. Defaults to 6378.1e3.
@@ -392,4 +395,4 @@ def create_emissions(species, emis, dt, distribute="uniform", weights=None, R=63
         emis = np.expand_dims(np.squeeze(emis), 1)
 
     emis_lat = weights*emis
-    return emissions(emis_lat, dt, species, ds_t.lat.values, np.expand_dims(ds_t.mva.values, 1), np.expand_dims(ds_t.dz.values, 1), R=R, emis_units=emis_units, mf_units=mf_units)
+    return emissions(emis_lat, species, ds_t.lat.values, np.expand_dims(ds_t.mva.values, 1), np.expand_dims(ds_t.dz.values, 1), R=R, emis_units=emis_units, mf_units=mf_units)

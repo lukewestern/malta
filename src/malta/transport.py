@@ -165,7 +165,7 @@ def rk4(cin, mva, Amat, dt):
     B = np.dot(Amat, (cinf + dt * A / 2.0))
     C = np.dot(Amat, (cinf + dt * B / 2.0))
     D = np.dot(Amat, (cinf + dt * C))
-    cinf += dt / 6.0 * (A + 2.0 * (B + C) + D)
+    cinf = cinf + dt / 6.0 * (A + 2.0 * (B + C) + D)
     return cinf.reshape((nya, nza)).T/mva
 
 # Mixed derivative diffusion
@@ -428,3 +428,54 @@ def linrood_advection(Q0, v, w, dy, dz, dt, mva, mvae, cosc, cose):
     dqvy = calc_flux(Qgy.T, Qmonoy.T, Cy.T, dt /
                      dy[0], cosc, cose, mvae, mva, u=v.T).T
     return Q0 + (dqvz + dqvy)/mva
+
+
+@jit(nopython=True)
+def cranknicholson_convection(c_in, C, eps, dt, dz, M):
+    """
+    Crank Nicholson solver for convection/frontal systems
+    More complicated matrix than diffusion so needs to be solved
+    """
+    c_in = c_in * M
+    blind = 1 # Boundary layer height
+    r = C/2 * dt/dz 
+    nz = len(c_in)
+
+    # Matrix for transport
+    A = np.zeros((nz,nz))
+    F_arr = np.zeros(nz)
+    A[0,:2] = np.array([1+r[0]/M[0], -r[0]/M[1]])
+    F_arr[0] = (1-r[0]/M[0])*c_in[0] + r[0]/M[1]*c_in[1]
+    for i in range(1,(blind+1)):
+        A[i, (i-1):(i+2)] = np.array([-r[i]/M[i-1], 1 + 2*r[i]/M[i], -r[i]/M[i+1]])
+        F_arr[i] = r[i]/M[i-1] * c_in[i-1] + (1 - 2*r[i]/M[i])*c_in[i] + r[i]/M[i+1]*c_in[i+1] 
+    for i in range(blind+1,nz-1):
+        A[i,blind] = -r[i]/M[blind]*eps[i]
+        A[i,i:(i+2)] = np.array([ 1+r[i]/M[i]*np.sum(eps[i:]), -r[i]/M[i+1]*np.sum(eps[(i+1):]) ])
+        F_arr[i] = r[i]/M[blind]*c_in[blind]*eps[i] + (1-r[i]/M[i]*np.sum(eps[i:]))*c_in[i] + r[i]/M[i+1]*c_in[i+1]*np.sum(eps[(i+1):])
+    A[-1,blind] = -r[-1]/M[blind] * eps[-1]
+    A[-1,-1] = 1 + r[-1]/M[-1] * eps[-1]
+    F_arr[-1] = r[-1]/M[blind]*c_in[blind]*eps[-1] + (1-r[-1]/M[-1]*eps[-1])*c_in[-1]
+
+    return np.linalg.solve(A, F_arr[:]) / M
+
+@jit(nopython=True)
+def convection(cin, convflux, dz, dt, M):
+    """Conmpute convection"""
+    c_out = np.zeros_like(cin)
+    ny = cin.shape[1]
+    nz = cin.shape[0]
+    C = np.sum(convflux[2:,:],0)
+    # C = np.sum(convflux,0)
+    # Compute 1D for each latitude band 
+    for j in range(ny):
+        if C[j] == 0:
+            c_out[:,j] = cin[:,j]
+        else:
+            eps = np.zeros(nz)
+            eps[2:] = convflux[2:,j]/C[j] #(C[j] - convflux[:2,j].sum())
+            c_out[:,j] = cranknicholson_convection(cin[:,j], C[j], eps, dt, dz, M)
+    
+    return c_out
+
+
