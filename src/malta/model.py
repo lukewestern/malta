@@ -79,9 +79,7 @@ def run_model(years_in, dt, emissions, sink, ics=None, trans_dir=None, convectio
         ds_t = utils.opends(trans_dir + f"transport2D_{str(year)}.nc")
         Dyy = ds_t.Dyy.values[:, :, :-1]
         Dzz = ds_t.Dzz.values[:, :-1, :] 
-        Dzz[:,:2,:] = Dzz[:,:2,:]
         Dyz = ds_t.Dzy.values 
-        Dyz[:,:2,:] = Dyz[:,:2,:] 
         w = ds_t.w.values
         v = ds_t.v.values
         temp = ds_t.temp.values
