@@ -3,7 +3,7 @@ version: 2
 
 # Image to use
 build:
-  os: CentOS-7
+  os: ubuntu-lts-latest
   image: testing
 
 # Configuration
