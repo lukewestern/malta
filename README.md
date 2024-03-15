@@ -21,7 +21,6 @@ from malta import model
 
 start_year = 2010
 end_year = 2021
-dt = 8*3600 # Time step in seconds
 species = "CFC11"
 
 # Set up and run model
@@ -29,7 +28,7 @@ years = np.array([str(yr) for yr in range(start_year,end_year)])
 emistot = np.repeat(10, len(years))
 emissions = model.create_emissions(species, emistot)
 sink = model.create_sink(species)
-ds_out = model.run_model(years, dt, emissions, sink) 
+ds_out = model.run_model(years, emissions, sink) 
 ```
 The returned ds_out is an xarray dataset containing monthly mean output variables from 
 the 2D model run.

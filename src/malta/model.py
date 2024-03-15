@@ -7,16 +7,16 @@ import xarray as xr
 import pandas as pd
 
 
-def run_model(years_in, dt, emissions, sink, ics=None, trans_dir=None, convection=True):
+def run_model(years_in, emissions, sink, ics=None, dt=28800, trans_dir=None, convection=True):
     """
     Runs 2D model for time period specified. 
 
     Args:
         years_in (array/list): Whole years for which to run model.
-        dt (float): Time step in seconds (recommended 8 hrs or less)
         emissions (class): Class containing emissions.
         sink (sink): Class containing sinks.
         ics (array, optional): Initial conditions of model. Defaults to None (zero initial conditions).
+        dt (float, optional): Time step in seconds (recommended 8 hrs or less). Defaults to 8 hours.
         trans_dir (str, optional): Path to directory containing transport files. Defaults to None.
         convecton (bool, optional): Whether to use the convective scheme (much slower). Defaults to True.
 
