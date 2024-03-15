@@ -4,7 +4,6 @@ version: 2
 # Image to use
 build:
   os: ubuntu-lts-latest
-  image: testing
   tools:
     python: "3.9"
 
