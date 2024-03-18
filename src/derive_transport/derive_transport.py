@@ -23,11 +23,13 @@ import glob
 from malta import utils
 from scipy.interpolate import interp2d
 from scipy.interpolate import pchip
+import os
 
 model_trans_dir = utils.get_transport_directory() # Main directory for yearly transport files to be saved to
 weight_folder = "/user/home/lw13938/work/TwoDmodel/weights" # Directory to save xesmf weights (stops conflicts)
 monthly_transport = "/user/home/lw13938/work/TwoDmodel/TransportParameters" # Directory to save temporary monthly netcdf transport files
 filepath = "/user/home/lw13938/work/GCClassic.13.3.4/rundirs/Tracer_outputs/" # Directory containing GEOS-Chem outputs
+gc_metpath = "/user/home/lw13938/shared/GEOS_CHEM/data/ExtData/GEOS_4x5/MERRA2/" # Directory contain GEOS-Chem met inputs
 
 def interpolate_T(ds_met, var, zb3D, lon, zx2D, latx2D):
     """
@@ -56,6 +58,37 @@ def interpolate_T(ds_met, var, zb3D, lon, zx2D, latx2D):
     dsTt = grid.transform(dsT_out[var], 'z', zx2D, target_data=dsT_out.z)
 
     return dsTt
+
+
+def interpolate_cflux(ds_met, var, zb3D, lon, zx2D, latx2D):
+    """
+    Interpolate dataset variable from 3D to 2D grid using xesmf.
+    Basically the same as interpolate_T but need some slight modifications.
+
+    Args:
+        ds_met (dataset): xarray dataset containing variable to interpolate
+        var (string): variable to interpolate
+        zb3D (array): Scale height of 3D model
+        lon (array): Longitude of 3D model
+        zx2D (array): Scale height of 2D model
+        latx2D (array): Latitude of 2D model
+
+    Returns:
+        DataArray: xarray DataArray of interpolated variable
+    """
+    dsT_ = ds_met[var]
+    dsT_ = dsT_.assign_coords(z=('lev',zb3D))
+    dsT = dsT_.swap_dims({'lev': 'z'})
+    ds_out = xr.Dataset({"lat": (["lat"], latx2D),
+            "lon": (["lon"], lon),
+            "z":  (["z"], zx2D),})
+    regridder = xe.Regridder(dsT, ds_out, "bilinear", filename=f"{weight_folder}/bilinear_{str(int(np.random.random()*100))}_{month}.nc") 
+    dsT_out = regridder(dsT).to_dataset(name="cflux").drop('lev')
+    grid = Grid(dsT_out, coords={'z': {'center':'z'}}, periodic=False)
+    dsTt = grid.transform(dsT_out["cflux"], 'z', zx2D, target_data=dsT_out.z)
+
+    return dsTt
+
 
 def pchip2(x, y, z, xi, yi):
     """
@@ -371,6 +404,31 @@ def make_nondivergent(w_in, v_in, cosc, cose, H, z, zm, y, dz, dy):
         
     return w, v
 
+def add_convection(ds2d):
+    """
+    Add convective parameters straight from MERRA2 met data
+    
+    Args:
+        ds2d (xarray dataset): The monthly dataset of 2D transport to which
+                               the convection will be added
+                               
+    Returns:
+        xarray dataarray: A Data Array of the 2D monthly convective flux
+    """
+    tdtime = pd.to_datetime(ds2d.time.values)
+    year = tdtime.year
+    m = tdtime.month
+    adpd = os.path.dirname(os.path.realpath(__file__))
+    dfzp = pd.read_csv(f"{adpd}/merra2_zpressure.dat", delim_whitespace=True)
+    zmerra = 7200*np.log(1000./dfzp["pressure"][1::2].values)[::-1]
+  
+    fns = sorted(glob.glob(f"{gc_metpath}/{year}/{str(m).zfill(2)}/MERRA2.*.A3dyn.4x5.nc4"))
+    dsconv = xr.open_mfdataset(fns,concat_dim="time", combine='nested')
+    cvmi = interpolate_cflux(dsconv, "DTRAIN", zmerra, dsconv.lon.values, ds2d.zm.values, ds2d.latm.values).transpose("time","z","lat","lon").mean(("lon")).resample(time="MS").mean()
+    ds_cv = cvmi/(1e-3*28.9647)
+    return xr.DataArray(ds_cv.assign_coords({"lat":ds2d.ym.values}).rename(lat="ym").rename(z="zm"))
+
+
 
 def make_2D_yearly_files(start_year, end_year = None):
     """Take monthly 2D transport and make CF compliant 3D netcdf files"""
@@ -398,11 +456,12 @@ def make_2D_yearly_files(start_year, end_year = None):
         'mva'  : {"long_name":"number density of air at cell midpoint","units":"m-3", "standard_name":"none"},
         'mvae' : {"long_name":"number density of air at cell boundary","units":"m-3", "standard_name":"none"},
         'z_trop': {"long_name":"layer which contains the tropopause","units":"none", "standard_name":"none"},
+        'cflux': {"long_name":"detraining_molar_flux","units":"mol m-2 s-1", "standard_name":"detraining_molar_flux"}
     }
 
     file_attrs = {
         "Title" : "Two dimensional transport derived from MERRA2.",
-        "Contact" : "Luke Western, luke.western@noaa.gov/luke.western@bristol.ac.uk",
+        "Contact" : "Luke Western, luke.western@bristol.ac.uk",
     }
 
     static_vars = ['press', 'cose', 'cosc', 'latm', 'lat', 'dy', 'dz', 'mva', 'mvae']
@@ -624,6 +683,10 @@ if __name__ == "__main__":
         ),
         attrs=dict(description="Input transport."),
     )
+    
+    # Now awkwardly add in the convective parameters
+    ds_2Dtransport["cflux"] = add_convection(ds_2Dtransport)
+    
     # comp = dict(zlib=True, complevel=5)
     # encoding = {var: comp for var in ds_2Dtransport.data_vars}
     ds_2Dtransport.to_netcdf(f"{monthly_transport}/transport2D_{month[:-2]}.nc")#, encoding=encoding, mode="w")
