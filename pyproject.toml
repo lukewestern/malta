@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "malta"
-version = "0.2.1"
+version = "0.2.2"
 description = "A 2D model of atmospheric transport"
 authors = ["Luke Western"]
 license = "MIT"
