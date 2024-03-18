@@ -3,11 +3,12 @@ version: 2
 
 # Image to use
 build:
-  image: testing
+  os: ubuntu-lts-latest
+  tools:
+    python: "3.9"
 
 # Configuration
 python:
-  version: 3.9
   install:
     - requirements: docs/requirements.txt
     - method: pip
