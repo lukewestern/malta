@@ -42,14 +42,19 @@ def get_OHfield():
     OH_ds = opends(f"{rel_path}/model_data/sinks/OH_fields.nc")
     return OH_ds.OH.values
 
+def get_O1Dfield():
+    """Returns O1D field as array"""
+    O1D_ds = opends(f"{rel_path}/model_data/sinks/O1D_fields.nc")
+    return O1D_ds.O1D.values
 
-def get_stratfield(species):
+
+def get_Jfield(species):
     """Returns stratospheric sink for species as array"""
-    ds_stratloss = opends(f"{rel_path}/model_data/sinks/strat_loss.nc")
+    ds_stratloss = opends(f"{rel_path}/model_data/sinks/J_fields.nc")
     if species in ds_stratloss.keys():
         return ds_stratloss[species].values
     else:
-        print(f"No stratospheric sink field found for {species}")
+        print(f"No photolysis sink found for {species}")
         return None
 
 

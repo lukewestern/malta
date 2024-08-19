@@ -47,7 +47,15 @@ def run_model(years_in, emissions, sink, ics=None, dt=28800, trans_dir=None, con
     nzm = len(ds_t.zm)
     nym = len(ds_t.ym)
 
+    # Get climatological tropopause height
     z_horiz = np.tile(zm, (nym, 1)).T
+    trop_mask = np.zeros((12, nzm, nym), dtype=bool)
+    strat_mask = np.zeros((12, nzm, nym), dtype=bool)
+    for i in range(12):
+        trop_mask[i, :, :] = z_horiz < np.expand_dims(
+            ds_t.z_trop.values[i, :], 0)
+        strat_mask[i, :, :] = z_horiz >= np.expand_dims(
+            ds_t.z_trop.values[i, :], 0)
 
     # If no initial conditions, set to zero
     if ics is None:
@@ -73,12 +81,30 @@ def run_model(years_in, emissions, sink, ics=None, dt=28800, trans_dir=None, con
 
     # Use climatological transport for years with no met
     years = utils.set_climatological_years(years_in, trans_dir)
+    
+    def adjust_tropical_strat_diffusion(Din, istrat_mask, adjust=4.):
+        """
+        Tropical UT/LS vertical diffusion is too small, meaning that 
+        air is too old in the stratosphere.
+        This just adjusts vertical diffusion in the tropics in the 
+        stratosphere to be 4 times larger. Bit of a fudge, but seems to 
+        improve things.
+        """
+        tmask = np.zeros((nzm, nym)).astype(bool) 
+        tmask[:,6:12] = True
+        Din[np.logical_and(istrat_mask, tmask)] = Din[np.logical_and(istrat_mask, tmask)]*adjust
+        return Din 
 
     for yr, year in enumerate(years):
         mt = 0
+        # Get stratosphere mask
+        istrat_mask = np.zeros((12, nzm, nym), dtype=bool)
+        for i in range(12):
+            istrat_mask[i, :, :] = z_horiz >= np.expand_dims(
+                ds_t.z_trop.values[i, :], 0)
         ds_t = utils.opends(trans_dir + f"transport2D_{str(year)}.nc")
         Dyy = ds_t.Dyy.values[:, :, :-1]
-        Dzz = ds_t.Dzz.values[:, :-1, :] 
+        Dzz = adjust_tropical_strat_diffusion(ds_t.Dzz.values[:, :-1, :], istrat_mask)
         Dyz = ds_t.Dzy.values 
         w = ds_t.w.values
         v = ds_t.v.values
@@ -114,22 +140,11 @@ def run_model(years_in, emissions, sink, ics=None, dt=28800, trans_dir=None, con
             cend[yr*12 + mt, :, :] = c_arr[-1, :, :]
             c_arr_mm[yr*12 + mt, :, :] = np.mean(c_arr, axis=0)
             loss_mm[yr*12 + mt, :, :] = np.mean(loss_arr, axis=0)
-
             c_arr_mm_trop[yr*12 + mt, :, :] = np.mean(c_arr, axis=0)
-            strat_mask = z_horiz >= np.expand_dims(
-                ds_t.z_trop.values[mt, :], 0)
-            c_arr_mm_trop[yr*12 + mt, strat_mask] = 0.
+            c_arr_mm_trop[yr*12 + mt, istrat_mask[mt, :, :]] = 0.
 
             mt += 1
 
-    # Get climatological tropopause height
-    trop_mask = np.zeros((12, nzm, nym), dtype=bool)
-    strat_mask = np.zeros((12, nzm, nym), dtype=bool)
-    for i in range(12):
-        trop_mask[i, :, :] = z_horiz < np.expand_dims(
-            ds_t.z_trop.values[i, :], 0)
-        strat_mask[i, :, :] = z_horiz >= np.expand_dims(
-            ds_t.z_trop.values[i, :], 0)
 
     B = np.sum(c_arr_mm*(1/emissions.unit_scale)*emissions.mol_air_bx,
                (1, 2))*emissions.molmass/emissions.emis_scale
@@ -191,16 +206,16 @@ def create_output(ds_out, c_arr_mm, cend, loss_mm, lifetime, lifetime_trop, life
                                       "units": f"years",
                                       "long_name": "Stratospheric atmospheric lifetime"}
     ds_out['burden'].attrs = {"standard_name": f"{emissions.species}_burden",
-                              "units": f"{emissions.emis_scale} kg",
+                              "units": f"{emissions.emis_scale} g",
                               "long_name": "Total atmospheric burden"}
     ds_out['burden_trop'].attrs = {"standard_name": f"{emissions.species}_tropospheric_burden",
-                                   "units": f"{emissions.emis_scale} kg",
+                                   "units": f"{emissions.emis_scale} g",
                                    "long_name": "Tropospheric atmospheric burden"}
     ds_out['loss'].attrs = {"standard_name": f"{emissions.species}_loss",
-                              "units": f"{emissions.emis_scale} kg",
+                              "units": f"{emissions.emis_scale} g",
                               "long_name": "Total atmospheric loss"}
     ds_out['loss_trop'].attrs = {"standard_name": f"{emissions.species}_tropospheric_loss",
-                                   "units": f"{emissions.emis_scale} kg",
+                                   "units": f"{emissions.emis_scale} g",
                                    "long_name": "Tropospheric atmospheric loss"}
     ds_out['lat'].attrs = {"standard_name": f"latitude",
                                    "units": "degree_north",
@@ -221,38 +236,49 @@ class sink:
     into model or having to load them during run time.
 
     Args:
-        strat_loss (array, optional): Stratospheric loss rate in each grid cell. Defaults to None.
-        OH_field (array, optional): OH loss rate in each grid cell. Defaults to None.
+        J_loss (array, optional): Photolysis loss rate in each grid cell. Defaults to None.
+        OH_field (array, optional): OH concentration in each grid cell. Defaults to None.
         A_OH (float, optional): Arrhenius A constant for OH. Defaults to None.
         ER_OH (float, optional): Arrhenius E/R constant for OH. Defaults to None.
         Cl_field (float, optional): Cl loss rate in each grid cell. Defaults to None.
         A_Cl (float, optional): Arrhenius A constant for Cl. Defaults to None.
         ER_Cl (float, optional): Arrhenius E/R constant for Cl. Defaults to None.
+        O1D_field (array, optional): O1D concentration in each grid cell. Defaults to None.
+        A_O1D (float, optional): Arrhenius A constant for O1D. Defaults to None.
+        ER_O1D (float, optional): Arrhenius E/R constant for O1D. Defaults to None.
     """
 
-    def __init__(self, strat_loss=None,
+    def __init__(self, J_loss=None,
                  OH_field=None, A_OH=None, ER_OH=None,
-                 Cl_field=None, A_Cl=None, ER_Cl=None):
+                 Cl_field=None, A_Cl=None, ER_Cl=None,
+                 O1D_field=None, A_O1D=None, ER_O1D=None):
 
-        self.strat_loss = strat_loss
+        self.J_loss = J_loss
         self.OH_field = OH_field
         self.Cl_field = Cl_field
+        self.O1D_field = O1D_field
         self.A_OH = A_OH
         self.ER_OH = ER_OH
         self.A_Cl = A_Cl
         self.ER_Cl = ER_Cl
+        self.A_O1D = A_O1D
+        self.ER_O1D = ER_O1D
 
     def losses(self, cin, dt, month, Temp=None):
         """Computes losses in mole fraction field"""
         loss_out = np.zeros_like(cin)
-        if self.strat_loss is not None:
-            cin, strat_loss = self.first_order_loss(
-                cin, dt, self.strat_loss[month, :, :])
-            loss_out += strat_loss
+        if self.J_loss is not None:
+            cin, J_loss = self.first_order_loss(
+                cin, dt, self.J_loss[month, :, :])
+            loss_out += J_loss
         if self.OH_field is not None:
             cin, OH_loss = self.arrhenius_loss(
                 cin, dt, self.A_OH, self.ER_OH, self.OH_field[month, :, :], Temp)
             loss_out += OH_loss
+        if self.O1D_field is not None:
+            cin, O1D_loss = self.arrhenius_loss(
+                cin, dt, self.A_O1D, self.ER_O1D, self.O1D_field[month, :, :], Temp)
+            loss_out += O1D_loss
         if self.Cl_field is not None:
             cin, Cl_loss = self.arrhenius_loss(
                 cin, dt, self.A_Cl, self.ER_Cl, self.Cl_field, Temp)
@@ -328,8 +354,18 @@ def create_sink(species):
         A_OH = None
         ER_OH = None
         OH_field = None
-    strat_loss = utils.get_stratfield(species)
-    return sink(strat_loss, OH_field, A_OH, ER_OH)
+    if "A_O1D" in species_info.keys() and "ER_O1D" in species_info.keys():
+        A_O1D = species_info["A_O1D"]
+        ER_O1D = species_info["ER_O1D"]
+        O1D_field = utils.get_O1Dfield()
+    else:
+        A_O1D = None
+        ER_O1D = None
+        O1D_field = None
+    J_loss = utils.get_Jfield(species)
+    return sink(J_loss, 
+                OH_field=OH_field, A_OH=A_OH, ER_OH=ER_OH,
+                O1D_field=O1D_field, A_O1D=A_O1D, ER_O1D=ER_O1D)
 
 
 def create_emissions(species, emis, distribute="uniform", weights=None, R=6378.1e3, emis_units="Gg", mf_units="ppt", trans_dir=None):

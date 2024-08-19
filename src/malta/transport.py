@@ -196,8 +196,8 @@ def interpolate1D(Fold, xnew, xold):
 @jit(nopython=True)
 def diff_Q0(Q0in, dx, epsilon=1e-3):
     """
-    Calculate central difference of d/dx
-    dq/dx -> inf when q -> 0. Therefore place threshold for mole fraction.
+    Calculate central difference of d/dx multiplied by 1/q
+    1/q*dq/dx -> inf when q -> 0. Therefore place threshold for mole fraction.
 
     Args:
         Q0in (array): Mole fraction field
@@ -223,7 +223,10 @@ def diff_Q0(Q0in, dx, epsilon=1e-3):
 def u_diffusive(Q0, Dzy, z, y, ze, ye, dz, dy):
     """    
     A velocity field, effectively Dyz*1/q*d/dx, which can be 
-    passed to an advection scheme for mixed derivative diffusion. 
+    passed to an advection scheme for positivity preserving
+    mixed derivative diffusion. 
+    This assumes  w and v are constant following a Picard-linearisation
+    from the previous time step else the advection becomes non-linear. 
 
     Args:
         Q0 (array): Mole fraction field

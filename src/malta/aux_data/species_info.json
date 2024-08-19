@@ -5,7 +5,9 @@
     "print_string": "CCl$_4$",
     "units": "ppt",
     "A_OH": 1e-11,
-    "ER_OH": 6200
+    "ER_OH": 6200,
+    "A_O1D": 3.3e-10,
+    "ER_O1D": 0
   },
   "CFC11": {
     "alt": [
@@ -16,7 +18,9 @@
     "print_string": "CFC-11",
     "units": "ppt",
     "A_OH": 1e-11,
-    "ER_OH": 9700
+    "ER_OH": 9700,
+    "A_O1D": 2.3e-10,
+    "ER_O1D": 0
   },
   "CFC113": {
     "alt": [
@@ -27,7 +31,9 @@
     "print_string": "CFC-113",
     "units": "ppt",
     "A_OH": 1e-11,
-    "ER_OH": 6200
+    "ER_OH": 6200,
+    "A_O1D": 2.32e-10,
+    "ER_O1D": 0
   },
   "CFC114": {
     "alt": [
@@ -38,7 +44,9 @@
     "print_string": "CFC-114",
     "units": "ppt",
     "A_OH": 1e-11,
-    "ER_OH": 6200
+    "ER_OH": 6200,
+    "A_O1D": 1.3e-10,
+    "ER_O1D": -25
   },
   "CFC115": {
     "alt": [
@@ -49,7 +57,9 @@
     "print_string": "CFC-115",
     "units": "ppt",
     "A_OH": 1e-11,
-    "ER_OH": 6200
+    "ER_OH": 6200,
+    "A_O1D": 5.4e-11,
+    "ER_O1D": -30
   },
   "CFC12": {
     "alt": [
@@ -60,7 +70,9 @@
     "print_string": "CFC-12",
     "units": "ppt",
     "A_OH": 1e-11,
-    "ER_OH": 11900
+    "ER_OH": 11900,
+    "A_O1D": 1.4e-10,
+    "ER_O1D": -25
   },
   "CH2Cl2": {
     "long_name": "CH2Cl2",
@@ -84,7 +96,9 @@
     "print_string": "CH$_3$CCl$_3",
     "units": "ppt",
     "A_OH": 1.64e-12,
-    "ER_OH": 1520
+    "ER_OH": 1520,
+    "A_O1D": 3.25e-10,
+    "ER_O1D": 0
   },
   "CHCl3": {
     "long_name": "CHCl3",
@@ -116,7 +130,9 @@
     "print_string": "H-1202",
     "units": "ppt",
     "A_OH": 1e-12,
-    "ER_OH": 2200
+    "ER_OH": 2200,
+    "A_O1D": 2.2e-10,
+    "ER_O1D": 0
   },
   "H1211": {
     "alt": [
@@ -128,7 +144,9 @@
     "print_string": "H-1211",
     "units": "ppt",
     "A_OH": 1e-12,
-    "ER_OH": 3500
+    "ER_OH": 3500,
+    "A_O1D": 1.5e-10,
+    "ER_O1D": 0
   },
   "H1301": {
     "alt": [
@@ -140,7 +158,9 @@
     "print_string": "H-1301",
     "units": "ppt",
     "A_OH": 1e-12,
-    "ER_OH": 3600
+    "ER_OH": 3600,
+    "A_O1D": 1.0e-10,
+    "ER_O1D": 0
   },
   "H2301": {
     "alt": [
@@ -188,7 +208,9 @@
     "print_string": "H-2402",
     "units": "ppt",
     "A_OH": 1e-12,
-    "ER_OH": 3600
+    "ER_OH": 3600,
+    "A_O1D": 1.6e-10,
+    "ER_O1D": 0
   },
   "HCFC122": {
     "alt": [
@@ -221,7 +243,9 @@
     "print_string": "HCFC-123",
     "units": "ppt",
     "A_OH": 7.4e-13,
-    "ER_OH": 900
+    "ER_OH": 900,
+    "A_O1D": 2.0e-10,
+    "ER_O1D": 0
   },
   "HCFC123a": {
     "alt": [
@@ -243,7 +267,9 @@
     "print_string": "HCFC-124",
     "units": "ppt",
     "A_OH": 7.1e-13,
-    "ER_OH": 1300
+    "ER_OH": 1300,
+    "A_O1D": 8.6e-11,
+    "ER_O1D": 0
   },
   "HCFC132b": {
     "alt": [
@@ -254,7 +280,9 @@
     "print_string": "HCFC-132b",
     "units": "ppt",
     "A_OH": 3.6e-12,
-    "ER_OH": 1600
+    "ER_OH": 1600,
+    "A_O1D": 1.6e-10,
+    "ER_O1D": 0
   },
   "HCFC132c": {
     "alt": [
@@ -276,7 +304,9 @@
     "print_string": "HCFC-133a",
     "units": "ppt",
     "A_OH": 9.4e-13,
-    "ER_OH": 1300
+    "ER_OH": 1300,
+    "A_O1D": 1.2e-10,
+    "ER_O1D": 0
   },
   "HCFC141b": {
     "alt": [
@@ -287,7 +317,9 @@
     "print_string": "HCFC-141b",
     "units": "ppt",
     "A_OH": 1.25e-12,
-    "ER_OH": 1600
+    "ER_OH": 1600,
+    "A_O1D": 2.6e-10,
+    "ER_O1D": 0
   },
   "HCFC142b": {
     "alt": [
@@ -298,7 +330,9 @@
     "print_string": "HCFC-142b",
     "units": "ppt",
     "A_OH": 1.3e-12,
-    "ER_OH": 1770
+    "ER_OH": 1770,
+    "A_O1D": 2.0e-10,
+    "ER_O1D": 0 
   },
   "HCFC21": {
     "alt": [
@@ -309,7 +343,9 @@
     "print_string": "HCFC-21",
     "units": "ppt",
     "A_OH": 1.52e-12,
-    "ER_OH": 1170
+    "ER_OH": 1170,
+    "A_O1D": 1.9e-10,
+    "ER_O1D": 0
   },
   "HCFC22": {
     "alt": [
@@ -320,7 +356,9 @@
     "print_string": "HCFC-22",
     "units": "ppt",
     "A_OH": 9.2e-13,
-    "ER_OH": 1560
+    "ER_OH": 1560,
+    "A_O1D": 1.02e-10,
+    "ER_O1D": 0
   },
   "HCFC225ca": {
     "alt": [
@@ -364,7 +402,9 @@
     "print_string": "HFC-125",
     "units": "ppt",
     "A_OH": 5.16e-13,
-    "ER_OH": 1670
+    "ER_OH": 1670,
+    "A_O1D": 9.5e-12,
+    "ER_O1D": -25
   },
   "HFC134a": {
     "alt": [
@@ -375,7 +415,9 @@
     "print_string": "HFC-134a",
     "units": "ppt",
     "A_OH": 1.03e-12,
-    "ER_OH": 1620
+    "ER_OH": 1620,
+    "A_O1D": 4.9e-11,
+    "ER_O1D": 0
   },
   "HFC143a": {
     "alt": [
@@ -386,7 +428,9 @@
     "print_string": "HFC-143a",
     "units": "ppt",
     "A_OH": 1.07e-12,
-    "ER_OH": 2000
+    "ER_OH": 2000,
+    "A_O1D": 5.6e-11,
+    "ER_O1D": -20
   },
   "HFC152a": {
     "alt": [
@@ -397,7 +441,9 @@
     "print_string": "HFC-152a",
     "units": "ppt",
     "A_OH": 8.7e-13,
-    "ER_OH": 975
+    "ER_OH": 975,
+    "A_O1D": 1.75e-10,
+    "ER_O1D": 0
   },
   "HFC227ea": {
     "alt": [
@@ -408,7 +454,9 @@
     "print_string": "HFC-227ea",
     "units": "ppt",
     "A_OH": 4.8e-13,
-    "ER_OH": 1680
+    "ER_OH": 1680,
+    "A_O1D": 7.9e-12,
+    "ER_O1D": -70
   },
   "HFC23": {
     "alt": [
@@ -419,7 +467,9 @@
     "print_string": "HFC-23",
     "units": "ppt",
     "A_OH": 6.1e-13,
-    "ER_OH": 2260
+    "ER_OH": 2260,
+    "A_O1D": 8.7e-12,
+    "ER_O1D": -30
   },
   "HFC245fa": {
     "alt": [
@@ -430,7 +480,9 @@
     "print_string": "HFC-245fa",
     "units": "ppt",
     "A_OH": 6.1e-13,
-    "ER_OH": 1330
+    "ER_OH": 1330,
+    "A_O1D": 1.5e-10,
+    "ER_O1D": 0
   },
   "HFC32": {
     "alt": [
@@ -441,7 +493,9 @@
     "print_string": "HFC-32",
     "units": "ppt",
     "A_OH": 1.7e-12,
-    "ER_OH": 1500
+    "ER_OH": 1500,
+    "A_O1D": 5.1e-11,
+    "ER_O1D": 0
   },
   "HFC365mfc": {
     "alt": [
@@ -453,6 +507,29 @@
     "units": "ppt",
     "A_OH": 1.8e-12,
     "ER_OH": 1660
+  },
+  "NF3": {
+    "alt": [],
+    "long_name": "nitrogen trifluoride",
+    "mol_mass": 71.00,
+    "print_string": "NF$_3$",
+    "units": "ppt",
+    "A_O1D": 2e-11,
+    "ER_O1D": -44
+  },
+  "PFC14": {
+    "alt": ["CF4"],
+    "long_name": "PFC-14",
+    "mol_mass": 88.0043,
+    "print_string": "CF$_4$",
+    "units": "ppt"
+  },
+  "PFC318": {
+    "alt": ["PFC-318", "C4F8", "c-C4F8", "octafluorocyclobutane"],
+    "long_name": "PFC-318",
+    "mol_mass": 200.03,
+    "print_string": "PFC-318",
+    "units": "ppt"
   },
   "SF6": {
     "alt": [],
