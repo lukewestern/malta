@@ -514,8 +514,8 @@
     "mol_mass": 44.013,
     "print_string": "N$_2$O",
     "units": "ppb",
-    "A_O1D": 2e-11,
-    "ER_O1D": -44
+    "A_O1D": 1.19e-10,
+    "ER_O1D": -20
   },
   "NF3": {
     "alt": [],
@@ -523,8 +523,8 @@
     "mol_mass": 71.00,
     "print_string": "NF$_3$",
     "units": "ppt",
-    "A_O1D": 1.9e-10,
-    "ER_O1D": -20
+    "A_O1D": 2e-11,
+    "ER_O1D": -44
   },
   "PFC14": {
     "alt": ["CF4"],
