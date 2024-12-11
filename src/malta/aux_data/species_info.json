@@ -508,6 +508,15 @@
     "A_OH": 1.8e-12,
     "ER_OH": 1660
   },
+  "N2O": {
+    "alt": [],
+    "long_name": "nitrous oxide",
+    "mol_mass": 44.013,
+    "print_string": "N$_2$O",
+    "units": "ppb",
+    "A_O1D": 1.19e-10,
+    "ER_O1D": -20
+  },
   "NF3": {
     "alt": [],
     "long_name": "nitrogen trifluoride",

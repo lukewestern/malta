@@ -29,13 +29,28 @@ def get_speciesinfo(species):
         species_info = json.load(f)
     return species_info[species]
 
+def print_speciesinfo(species=None):
+    """Print all species info in species_info file"""
+    with open(f"{rel_path}/aux_data/species_info.json") as f:
+        species_info = json.load(f)
+    for s in species_info.keys():
+        if get_Jfield(s) is not None:
+            species_info[s]["J_field"] = True
+        else:
+            species_info[s]["J_field"] = False
+    df_sp = pd.DataFrame(species_info)     
+    if species is None:
+        for s in species_info.keys():
+            print(df_sp[s])
+    else:
+        print(df_sp[species])
+
 
 def get_siteinfo(site):
     """Return info about a site from site_info"""
     with open(f"{rel_path}/aux_data/site_info.json") as f:
         site_info = json.load(f)
     return site_info[site]
-
 
 def get_OHfield():
     """Returns OH field as array"""
@@ -54,7 +69,6 @@ def get_Jfield(species):
     if species in ds_stratloss.keys():
         return ds_stratloss[species].values
     else:
-        print(f"No photolysis sink found for {species}")
         return None
 
 
