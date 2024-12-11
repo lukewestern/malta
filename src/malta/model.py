@@ -120,7 +120,7 @@ def run_model(years_in, emissions, sink, ics=None, dt=28800, trans_dir=None, con
             c_arr[-1, :, :] = ics
             for _ in range(mnth):
                 for __ in range(dtpd):
-                    c_arr[t, :, :] = c_arr[t-1, :, :] + emissions.emit(dt, yr)
+                    c_arr[t, :, :] = c_arr[t-1, :, :] + emissions.emit(dt, yr, mt)
                     c_arr[t, :, :] = transport.linrood_advection(
                         c_arr[t, :, :], v[mt, :, :], w[mt, :, :], dy, dz, dt, mva, mvae, cosc, cose)
                     c_arr[t, :, :] = transport.rk4(c_arr[t, :, :], mva,  A, dt)
@@ -318,7 +318,7 @@ class emissions:
         mf_units (str, optional): Units of mole fractions (ppq, ppt, ppb, ppm). Defaults to "ppt".
     """
 
-    def __init__(self, emis, species, lat, mva, dz, R=6378.1e3, emis_units="Gg", mf_units="ppt"):
+    def __init__(self, emis, species, lat, mva, dz, R=6378.1e3, emis_units="Gg", mf_units="ppt", monthly=False):
 
         if emis.shape[1] != (len(lat)-1):
             print("Warning: shape of emissions array do not match latitude boxes")
@@ -334,11 +334,15 @@ class emissions:
         self.ny = int(len(lat)-1)
         self.nz = len(dz)
         self.emis = emis
+        self.monthly = monthly
 
-    def emit(self, dt, year):
+    def emit(self, dt, year, month=None):
         """Function to emit emissions"""
         mol_emitted = np.zeros((self.nz, self.ny))
-        g_emitted = self.emis[year, :]*self.emis_scale*dt / (3600*24*365)
+        if self.monthly:
+            g_emitted = self.emis[year*12+month, :]*self.emis_scale*dt / (3600*24*365)
+        else:
+            g_emitted = self.emis[year, :]*self.emis_scale*dt / (3600*24*365)
         mol_emitted[0, :] = g_emitted/self.molmass/self.mol_air_bx[0, :]
         return mol_emitted*self.unit_scale
 
@@ -368,7 +372,7 @@ def create_sink(species):
                 O1D_field=O1D_field, A_O1D=A_O1D, ER_O1D=ER_O1D)
 
 
-def create_emissions(species, emis, distribute="uniform", weights=None, R=6378.1e3, emis_units="Gg", mf_units="ppt", trans_dir=None):
+def create_emissions(species, emis, distribute="uniform", weights=None, R=6378.1e3, emis_units="Gg", mf_units="ppt", trans_dir=None, monthly=False):
     """
     Wrapper to create emissions class. Provides a convenient way to distribute the global total of emissions. Emissions distributions have been interpolated
     from multiple data sources: 
@@ -429,4 +433,5 @@ def create_emissions(species, emis, distribute="uniform", weights=None, R=6378.1
         emis = np.expand_dims(np.squeeze(emis), 1)
 
     emis_lat = weights*emis
-    return emissions(emis_lat, species, ds_t.lat.values, np.expand_dims(ds_t.mva.values, 1), np.expand_dims(ds_t.dz.values, 1), R=R, emis_units=emis_units, mf_units=mf_units)
+    return emissions(emis_lat, species, ds_t.lat.values, np.expand_dims(ds_t.mva.values, 1), np.expand_dims(ds_t.dz.values, 1), 
+                     R=R, emis_units=emis_units, mf_units=mf_units, monthly=monthly)
