@@ -16,8 +16,8 @@
 import xarray as xr
 import numpy as np
 import pandas as pd
-import xesmf as xe
-from xgcm import Grid
+# import xesmf as xe
+# from xgcm import Grid
 import sys
 import glob
 from malta import utils
@@ -491,7 +491,10 @@ def make_2D_yearly_files(start_year, end_year = None):
         yrds.attrs = file_attrs
         yrds.attrs["Filename"] = f"transport2D_{year}.nc"
         yrds.attrs["History"] = f"File created on {pd.to_datetime('today')}"
-        yrds.to_netcdf(f"{model_trans_dir}/transport2D_{year}.nc")    
+        print(f"writing transport file to {model_trans_dir}/transport2D_{year}.nc")
+        # Add compression to file
+        encoding = {var: {'zlib': True, 'complevel': 5} for var in yrds.data_vars}
+        yrds.to_netcdf(f"{model_trans_dir}/transport2D_{year}.nc", encoding=encoding)    
 
     # yrfns = sorted(glob.glob(f"{monthly_transport}/transport2D_{1900}*"))
     # yrds = xr.open_mfdataset(yrfns, combine='nested', concat_dim="time")

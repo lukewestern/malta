@@ -23,6 +23,7 @@ def run_model(years_in, emissions, sink, ics=None, dt=28800, trans_dir=None, con
     Returns:
         dataset: xarray dataset containing outputs from model.
     """
+    years_in = years_in.astype(int)
     nyears = int(len(years_in))
     # days in each month. Ignore leap years for now.
     dom = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
