@@ -1,5 +1,9 @@
 # Changelog
 
+## V0.3.1 (09/07/2025)
+- Updated transport through 2024
+- Moved away from poetry to standard pip install
+
 ## V0.3.0 (16/08/2024)
 - Sinks are now updated
     - No "strat field" sink

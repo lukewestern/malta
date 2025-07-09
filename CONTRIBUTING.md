@@ -43,21 +43,35 @@ If you are proposing a feature:
 Ready to contribute? Here's how to set up `malta` for local development.
 
 1. Download a copy of `malta` locally.
-2. Install `malta` using `poetry`:
 
-    ```console
-    $ poetry install
+2. Create and activate a virtual environment (recommended):
+
+    ```bash
+    python3 -m venv venv
+    source venv/bin/activate       # On Windows use `venv\Scripts\activate`
     ```
 
-3. Use `git` (or similar) to create a branch for local development and make your changes:
+3. Install the package in editable mode with pip:
 
-    ```console
-    $ git checkout -b name-of-your-bugfix-or-feature
+    ```bash
+    pip install -e .
     ```
 
-4. When you're done making changes, check that your changes conform to any code formatting requirements and pass any tests.
+4. Install development dependencies:
 
-5. Commit your changes and open a pull request.
+    ```bash
+    pip install -r requirements-dev.txt
+    ```
+
+5. Use `git` (or similar) to create a branch for local development and make your changes:
+
+    ```bash
+    git checkout -b name-of-your-bugfix-or-feature
+    ```
+
+6. When you're done making changes, check that your changes conform to any code formatting requirements and pass any tests.
+
+7. Commit your changes and open a pull request.
 
 ## Pull Request Guidelines
 
